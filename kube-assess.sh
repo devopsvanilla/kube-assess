@@ -67,6 +67,14 @@ kubectl get hpa -A > "$OUTPUT_DIR/hpa.txt"
 kubectl get vpa -A > "$OUTPUT_DIR/vpa.txt" 2>/dev/null
 kubectl get pdb -A > "$OUTPUT_DIR/pod_disruption_budgets.txt"
 
+echo "🐳 Coletando informações de imagens e registros..."
+kubectl get pods -A -o json | jq -r '.items[] | {namespace: .metadata.namespace, pod: .metadata.name, containers: [.spec.containers[] | {name: .name, image: .image, imagePullPolicy: .imagePullPolicy}]}' > "$OUTPUT_DIR/pod_images.json"
+kubectl get pods -A -o json | jq -r '.items[] | .spec.containers[] | .image' | sort -u > "$OUTPUT_DIR/images_list.txt"
+kubectl get pods -A -o json | jq -r '.items[] | .spec.containers[] | .image' | sed 's|/.*||' | sort | uniq -c | sort -rn > "$OUTPUT_DIR/image_registries_count.txt"
+kubectl get pods -A -o json | jq -r '.items[] | select(.spec.containers[].image | contains(":latest") or (contains(":") | not)) | {namespace: .metadata.namespace, pod: .metadata.name, images: [.spec.containers[].image]}' > "$OUTPUT_DIR/images_using_latest.json"
+kubectl get pods -A -o json | jq -r '.items[] | select(.spec.imagePullSecrets != null) | {namespace: .metadata.namespace, pod: .metadata.name, imagePullSecrets: [.spec.imagePullSecrets[].name]}' > "$OUTPUT_DIR/image_pull_secrets.json"
+kubectl get deployments,daemonsets,statefulsets -A -o json | jq -r '.items[] | {kind: .kind, namespace: .metadata.namespace, name: .metadata.name, images: [.spec.template.spec.containers[].image], imagePullPolicy: [.spec.template.spec.containers[].imagePullPolicy] | unique}' > "$OUTPUT_DIR/workload_images.json"
+
 echo "🌐 Coletando informações de exposição das aplicações..."
 kubectl get services -A -o wide > "$OUTPUT_DIR/services.txt"
 kubectl describe services -A > "$OUTPUT_DIR/services_describe.txt"

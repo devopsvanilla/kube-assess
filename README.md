@@ -59,6 +59,14 @@ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 - Vertical Pod Autoscalers (VPA)
 - Pod Disruption Budgets (PDB)
 
+### 🐳 Imagens e Registros
+- Lista completa de imagens em uso no cluster
+- Imagens por pod com container e ImagePullPolicy
+- Contagem de uso por registro (docker.io, gcr.io, quay.io, ECR, ACR, etc.)
+- Identificação de imagens usando tag `:latest` ou sem tag específica
+- ImagePullSecrets (secrets para autenticação em registros privados)
+- Imagens usadas por workloads (Deployments, DaemonSets, StatefulSets) com políticas
+
 ### 🌐 Exposição de Aplicações
 - Services (ClusterIP, NodePort, LoadBalancer)
 - Ingress e Ingress Classes
@@ -171,6 +179,12 @@ k8s_assessment_YYYYMMDD_HHMMSS/
 ├── nodes_describe.txt
 ├── nodes_taints_labels.json
 ├── deployments.txt
+├── pod_images.json
+├── images_list.txt
+├── image_registries_count.txt
+├── images_using_latest.json
+├── image_pull_secrets.json
+├── workload_images.json
 ├── services.txt
 ├── ingress.txt
 ├── rbac_roles.txt
@@ -254,6 +268,12 @@ Após a execução, você pode:
    
    # Identificar pods com muitos restarts
    jq -r 'select(.restarts > 5)' pod_restarts.json
+   
+   # Listar registros de imagens mais usados
+   cat image_registries_count.txt
+   
+   # Identificar imagens usando :latest
+   jq -r '.pod + " - " + (.images | join(", "))' images_using_latest.json
    ```
 
 3. **Comparar assessments ao longo do tempo** para identificar tendências
@@ -266,7 +286,8 @@ Este script é fornecido "como está" para fins de assessment e diagnóstico de 
 
 Sugestões e melhorias são bem-vindas! Considere adicionar:
 - Análise de logs de pods com problemas
-- Verificação de imagens vulneráveis
+- Verificação de imagens vulneráveis (integração com scanners)
+- Análise de registros de imagens não confiáveis
 - Validação de best practices
 - Geração de relatório consolidado em HTML/PDF
 
